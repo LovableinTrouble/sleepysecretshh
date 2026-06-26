@@ -290,7 +290,8 @@ function LiveSportsRail() {
 }
 
 function MatchCard({ m }: { m: SportsMatch }) {
-  const src = m.sources[0];
+  const src = m.sources.find((s) => s.source === "admin") ?? m.sources[0];
+  const sourcesStr = JSON.stringify(m.sources);
   const icon = SPORT_ICONS[m.category] ?? "🏅";
   const poster = sportsImage(m.poster);
   const home = m.teams?.home?.name;
@@ -299,7 +300,7 @@ function MatchCard({ m }: { m: SportsMatch }) {
     <Link
       to="/sports/$source/$id"
       params={{ source: src.source, id: src.id }}
-      search={{ title: m.title, category: m.category }}
+      search={{ title: m.title, category: m.category, sources: sourcesStr }}
       className="group relative h-36 w-72 shrink-0 snap-start overflow-hidden rounded-2xl border border-white/10 bg-card/40 ring-1 ring-white/5 transition hover:-translate-y-0.5 hover:border-primary/50"
     >
       {poster ? (
