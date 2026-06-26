@@ -17,7 +17,7 @@ export const Route = createFileRoute("/sports")({
 
 function SportsRoute() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const isPlayer = pathname !== "/sports";
+  const isPlayer = pathname.replace(/\/+$/, "") !== "/sports";
 
   return (
     <>
