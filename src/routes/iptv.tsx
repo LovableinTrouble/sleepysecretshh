@@ -1,14 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Tv2, RadioTower, Star, Trophy, ArrowRight, Users } from "lucide-react";
-import { CURATED_CHANNELS, CURATED_GROUPS, type CuratedChannel } from "@/lib/iptv-curated";
-import {
-  fetchPopularLive,
-  sportsImage,
-  SPORT_ICONS,
-  type SportsMatch,
-} from "@/lib/sports";
+import { Search, Tv2, RadioTower, Star, Trophy, ArrowRight } from "lucide-react";
+import { CURATED_CHANNELS, CURATED_GROUPS } from "@/lib/iptv-curated";
+import { fetchPpvAll, flattenEvents, isEventLive } from "@/lib/sports";
 
 export const Route = createFileRoute("/iptv")({
   head: () => ({
