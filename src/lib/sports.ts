@@ -1,6 +1,6 @@
 // Live sports — thin client for the public ppv.to API.
-// Endpoint: https://ppv.to/api/streams
-// Each event ships with its own `iframe` embed URL — no per-event lookup.
+// Endpoint: https://api.ppv.to/api/streams
+// Each live event ships with its own `iframe` embed URL — no per-event lookup.
 
 export interface PpvEvent {
   id: number;
@@ -19,6 +19,7 @@ export interface PpvEvent {
   iframe: string;
   viewers?: string | number;
   substreams?: { id: number; name: string; iframe: string }[];
+  allowpaststreams?: 0 | 1;
 }
 
 export interface PpvCategory {
@@ -40,8 +41,23 @@ export async function fetchPpvAll(): Promise<PpvCategory[]> {
 
 export interface FlatEvent extends PpvEvent { category: string }
 
-export function flattenEvents(cats: PpvCategory[]): FlatEvent[] {
-  return cats.flatMap((c) => c.streams.map((s) => ({ ...s, category: c.category })));
+export function isRealSportsCategory(category?: string): boolean {
+  if (!category) return false;
+  return !/24\s*\/\s*7/i.test(category);
+}
+
+export function normalizeIframeSrc(iframe?: string): string {
+  const value = (iframe || "").trim();
+  if (!value) return "";
+  if (value.startsWith("<")) {
+    const match = value.match(/\ssrc=(['"])(.*?)\1/i);
+    return match?.[2]?.trim() || "";
+  }
+  return value;
+}
+
+export function hasPlayableIframe(e: Pick<PpvEvent, "iframe">): boolean {
+  return /^https?:\/\//i.test(normalizeIframeSrc(e.iframe));
 }
 
 export function isEventLive(e: PpvEvent, nowSec = Date.now() / 1000): boolean {
@@ -49,10 +65,29 @@ export function isEventLive(e: PpvEvent, nowSec = Date.now() / 1000): boolean {
   return e.starts_at <= nowSec && nowSec <= e.ends_at;
 }
 
+export function isLiveSportsEvent(e: PpvEvent, category?: string, nowSec = Date.now() / 1000): boolean {
+  return isRealSportsCategory(category || e.category_name) && isEventLive(e, nowSec) && hasPlayableIframe(e);
+}
+
+export function flattenEvents(cats: PpvCategory[]): FlatEvent[] {
+  const now = Date.now() / 1000;
+  return cats.flatMap((c) => {
+    if (!isRealSportsCategory(c.category)) return [];
+    return c.streams
+      .map((s) => ({ ...s, category: c.category }))
+      .filter((e) => isLiveSportsEvent(e, e.category, now));
+  });
+}
+
 export function findEvent(cats: PpvCategory[], id: number): FlatEvent | undefined {
+  const now = Date.now() / 1000;
   for (const c of cats) {
+    if (!isRealSportsCategory(c.category)) continue;
     const s = c.streams.find((x) => x.id === id);
-    if (s) return { ...s, category: c.category };
+    if (s) {
+      const event = { ...s, category: c.category };
+      return isLiveSportsEvent(event, event.category, now) ? event : undefined;
+    }
   }
   return undefined;
 }
