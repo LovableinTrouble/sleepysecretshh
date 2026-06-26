@@ -1,22 +1,33 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Trophy, ArrowLeft, Search, Users } from "lucide-react";
-import { fetchPpvAll, flattenEvents, isEventLive, type FlatEvent } from "@/lib/sports";
+import { Trophy, ArrowLeft, Search, Users, RadioTower } from "lucide-react";
+import { fetchPpvAll, flattenEvents, type FlatEvent } from "@/lib/sports";
 import { SportIcon } from "@/components/SportIcon";
 
 export const Route = createFileRoute("/sports")({
   head: () => ({
     meta: [
       { title: "Live Sports — SLEEPY" },
-      { name: "description", content: "Watch every live sports match — football, NBA, NFL, MLB, UFC and more, free." },
+      { name: "description", content: "Watch live sports matches airing right now." },
     ],
   }),
-  component: SportsPage,
+  component: SportsRoute,
 });
 
+function SportsRoute() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isPlayer = pathname.replace(/\/+$/, "") !== "/sports";
+
+  return (
+    <>
+      {!isPlayer && <SportsPage />}
+      <Outlet />
+    </>
+  );
+}
+
 function SportsPage() {
-  const [tab, setTab] = useState<"live" | "upcoming">("live");
   const [cat, setCat] = useState<string>("all");
   const [query, setQuery] = useState("");
 
@@ -24,38 +35,27 @@ function SportsPage() {
     queryKey: ["ppv", "all"],
     queryFn: fetchPpvAll,
     staleTime: 60_000,
-    refetchInterval: 120_000,
+    refetchInterval: 60_000,
+    retry: 2,
   });
 
-  const all = useMemo(
-    () => (data ? flattenEvents(data).filter((e) => e.category !== "24/7 Streams") : []),
-    [data],
-  );
+  const all = useMemo(() => (data ? flattenEvents(data) : []), [data]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const now = Date.now() / 1000;
     return all
       .filter((e) => {
-        const live = isEventLive(e, now);
-        if (tab === "live" && !live) return false;
-        if (tab === "upcoming" && (live || e.starts_at <= now)) return false;
         if (cat !== "all" && e.category !== cat) return false;
-        if (q && !e.name.toLowerCase().includes(q)) return false;
+        if (q && !`${e.name} ${e.category} ${e.tag || ""}`.toLowerCase().includes(q)) return false;
         return true;
       })
-      .sort((a, b) => a.starts_at - b.starts_at);
-  }, [all, cat, query, tab]);
+      .sort((a, b) => Number(b.viewers || 0) - Number(a.viewers || 0) || a.starts_at - b.starts_at);
+  }, [all, cat, query]);
 
   const categories = useMemo(() => {
     const s = new Set<string>();
     for (const e of all) s.add(e.category);
     return ["all", ...Array.from(s).sort()];
-  }, [all]);
-
-  const liveCount = useMemo(() => {
-    const now = Date.now() / 1000;
-    return all.filter((e) => isEventLive(e, now)).length;
   }, [all]);
 
   return (
@@ -76,29 +76,16 @@ function SportsPage() {
 
         <div className="mt-5 rounded-2xl border border-glass-border bg-card/40 p-2 backdrop-blur">
           <div className="flex flex-col gap-2 md:flex-row md:items-center">
-            <div className="inline-flex shrink-0 rounded-xl bg-white/5 p-1 ring-1 ring-white/10">
-              {(["live", "upcoming"] as const).map((t) => {
-                const count = t === "live" ? liveCount : all.length - liveCount;
-                return (
-                  <button
-                    key={t}
-                    onClick={() => setTab(t)}
-                    className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold capitalize transition ${
-                      tab === t ? "bg-primary text-primary-foreground" : "text-white/70 hover:text-white"
-                    }`}
-                  >
-                    {t === "live" ? "Live now" : "Upcoming"}
-                    <span className={`rounded px-1 text-[10px] ${tab === t ? "bg-black/20" : "bg-white/10"}`}>{count}</span>
-                  </button>
-                );
-              })}
+            <div className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-red-500/10 px-3 py-2 text-xs font-bold uppercase tracking-[0.22em] text-red-200 ring-1 ring-red-500/25">
+              <span className="h-2 w-2 rounded-full bg-red-400 animate-pulse" />
+              {all.length} live now
             </div>
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search matches, teams…"
+                placeholder="Search live matches, teams…"
                 className="w-full rounded-xl bg-background/40 py-2 pl-9 pr-3 text-sm outline-none ring-1 ring-white/10 transition focus:ring-2 focus:ring-primary/40"
               />
             </div>
@@ -133,7 +120,7 @@ function SportsPage() {
         )}
         {error && (
           <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs text-amber-200/80">
-            Couldn't load matches. Try again in a moment.
+            Couldn't load live matches. Try again in a moment.
           </div>
         )}
         {!!visible.length && (
@@ -141,8 +128,15 @@ function SportsPage() {
             {visible.map((e) => <BigMatchCard key={e.id} e={e} />)}
           </div>
         )}
+        {!isLoading && !error && all.length === 0 && (
+          <div className="grid place-items-center rounded-2xl border border-glass-border bg-card/30 px-6 py-16 text-center">
+            <RadioTower className="h-9 w-9 text-muted-foreground" />
+            <p className="mt-3 text-sm font-semibold text-foreground">No live sports streams right now.</p>
+            <p className="mt-1 text-xs text-muted-foreground">This page only shows matches that are live and playable.</p>
+          </div>
+        )}
         {!isLoading && !!all.length && visible.length === 0 && (
-          <div className="py-20 text-center text-sm text-muted-foreground">No matches match your filters.</div>
+          <div className="py-20 text-center text-sm text-muted-foreground">No live matches match your filters.</div>
         )}
       </main>
     </div>
@@ -150,58 +144,47 @@ function SportsPage() {
 }
 
 function BigMatchCard({ e }: { e: FlatEvent }) {
-  const live = isEventLive(e);
-  const startsIn = (e.starts_at * 1000 - Date.now()) / 60000;
   const viewers = typeof e.viewers === "string" ? parseInt(e.viewers, 10) || 0 : e.viewers ?? 0;
 
-  const inner = (
-    <div className="group relative h-44 w-full overflow-hidden rounded-2xl border border-white/10 bg-card/40 ring-1 ring-white/5 transition hover:-translate-y-0.5 hover:border-primary/50">
-      {e.poster ? (
-        <img
-          src={e.poster}
-          alt=""
-          loading="lazy"
-          referrerPolicy="no-referrer"
-          className="absolute inset-0 h-full w-full object-cover opacity-60 transition group-hover:opacity-80"
-        />
-      ) : (
-        <div
-          className="absolute inset-0"
-          style={{
-            background: e.colors?.length
-              ? `linear-gradient(135deg, ${e.colors[0]} 0%, #000 70%)`
-              : "linear-gradient(135deg, rgba(59,130,246,0.25), rgba(0,0,0,0.6))",
-          }}
-        />
-      )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/30" />
-      <div className={`absolute left-2 top-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ring-1 ${
-        live ? "bg-red-500/90 text-white ring-red-300/40" : "bg-white/10 text-white/80 ring-white/15"
-      }`}>
-        {live ? (<><span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" /> LIVE</>) : (<>SOON</>)}
-      </div>
-      {live && viewers > 50 && (
-        <div className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white/90 ring-1 ring-white/15 backdrop-blur">
-          <Users className="h-3 w-3" /> {viewers.toLocaleString()}
-        </div>
-      )}
-      <div className="absolute inset-x-0 bottom-0 p-3">
-        <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/75">
-          <SportIcon category={e.category} className="h-3 w-3" />
-          <span>{e.category}</span>
-          {!live && startsIn > 0 && (
-            <span>· in {startsIn < 60 ? `${Math.round(startsIn)}m` : `${Math.round(startsIn / 60)}h`}</span>
-          )}
-          {e.tag && <span className="rounded bg-white/10 px-1 text-[9px]">{e.tag}</span>}
-        </div>
-        <div className="mt-1 line-clamp-2 text-sm font-bold leading-tight text-white">{e.name}</div>
-      </div>
-    </div>
-  );
-
   return (
-    <Link to="/sports/$id" params={{ id: String(e.id) }}>
-      {inner}
+    <Link to="/sports/$id" params={{ id: String(e.id) }} preload="intent" className="block">
+      <div className="group relative h-44 w-full overflow-hidden rounded-2xl border border-white/10 bg-card/40 ring-1 ring-white/5 transition active:scale-[0.99] hover:-translate-y-0.5 hover:border-primary/50">
+        {e.poster ? (
+          <img
+            src={e.poster}
+            alt=""
+            loading="lazy"
+            referrerPolicy="no-referrer"
+            className="absolute inset-0 h-full w-full object-cover opacity-60 transition group-hover:opacity-80"
+          />
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{
+              background: e.colors?.length
+                ? `linear-gradient(135deg, ${e.colors[0]} 0%, #000 70%)`
+                : "linear-gradient(135deg, rgba(59,130,246,0.25), rgba(0,0,0,0.6))",
+            }}
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/30" />
+        <div className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-red-500/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white ring-1 ring-red-300/40">
+          <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" /> LIVE
+        </div>
+        {viewers > 0 && (
+          <div className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white/90 ring-1 ring-white/15 backdrop-blur">
+            <Users className="h-3 w-3" /> {viewers.toLocaleString()}
+          </div>
+        )}
+        <div className="absolute inset-x-0 bottom-0 p-3">
+          <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/75">
+            <SportIcon category={e.category} className="h-3 w-3" />
+            <span>{e.category}</span>
+            {e.tag && <span className="rounded bg-white/10 px-1 text-[9px]">{e.tag}</span>}
+          </div>
+          <div className="mt-1 line-clamp-2 text-sm font-bold leading-tight text-white">{e.name}</div>
+        </div>
+      </div>
     </Link>
   );
 }
