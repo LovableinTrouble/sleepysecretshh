@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WatchlistRouteImport } from './routes/watchlist'
-import { Route as SportsRouteImport } from './routes/sports'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as IptvRouteImport } from './routes/iptv'
@@ -31,11 +30,6 @@ import { Route as ApiPpvStreamsRouteImport } from './routes/api/ppv.streams'
 const WatchlistRoute = WatchlistRouteImport.update({
   id: '/watchlist',
   path: '/watchlist',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SportsRoute = SportsRouteImport.update({
-  id: '/sports',
-  path: '/sports',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -74,9 +68,9 @@ const WatchIdRoute = WatchIdRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const SportsIdRoute = SportsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => SportsRoute,
+  id: '/sports/$id',
+  path: '/sports/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const PersonIdRoute = PersonIdRouteImport.update({
   id: '/person/$id',
@@ -126,7 +120,6 @@ export interface FileRoutesByFullPath {
   '/iptv': typeof IptvRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
-  '/sports': typeof SportsRouteWithChildren
   '/watchlist': typeof WatchlistRoute
   '/live/$id': typeof LiveIdRoute
   '/person/$id': typeof PersonIdRoute
@@ -146,7 +139,6 @@ export interface FileRoutesByTo {
   '/iptv': typeof IptvRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
-  '/sports': typeof SportsRouteWithChildren
   '/watchlist': typeof WatchlistRoute
   '/live/$id': typeof LiveIdRoute
   '/person/$id': typeof PersonIdRoute
@@ -167,7 +159,6 @@ export interface FileRoutesById {
   '/iptv': typeof IptvRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
-  '/sports': typeof SportsRouteWithChildren
   '/watchlist': typeof WatchlistRoute
   '/live/$id': typeof LiveIdRoute
   '/person/$id': typeof PersonIdRoute
@@ -189,7 +180,6 @@ export interface FileRouteTypes {
     | '/iptv'
     | '/search'
     | '/settings'
-    | '/sports'
     | '/watchlist'
     | '/live/$id'
     | '/person/$id'
@@ -209,7 +199,6 @@ export interface FileRouteTypes {
     | '/iptv'
     | '/search'
     | '/settings'
-    | '/sports'
     | '/watchlist'
     | '/live/$id'
     | '/person/$id'
@@ -229,7 +218,6 @@ export interface FileRouteTypes {
     | '/iptv'
     | '/search'
     | '/settings'
-    | '/sports'
     | '/watchlist'
     | '/live/$id'
     | '/person/$id'
@@ -250,10 +238,10 @@ export interface RootRouteChildren {
   IptvRoute: typeof IptvRoute
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
-  SportsRoute: typeof SportsRouteWithChildren
   WatchlistRoute: typeof WatchlistRoute
   LiveIdRoute: typeof LiveIdRoute
   PersonIdRoute: typeof PersonIdRoute
+  SportsIdRoute: typeof SportsIdRoute
   WatchIdRoute: typeof WatchIdRoute
   ApiPpvStreamsRoute: typeof ApiPpvStreamsRoute
   ApiPublicDownloadRoute: typeof ApiPublicDownloadRoute
@@ -270,13 +258,6 @@ declare module '@tanstack/react-router' {
       path: '/watchlist'
       fullPath: '/watchlist'
       preLoaderRoute: typeof WatchlistRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sports': {
-      id: '/sports'
-      path: '/sports'
-      fullPath: '/sports'
-      preLoaderRoute: typeof SportsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -330,10 +311,10 @@ declare module '@tanstack/react-router' {
     }
     '/sports/$id': {
       id: '/sports/$id'
-      path: '/$id'
+      path: '/sports/$id'
       fullPath: '/sports/$id'
       preLoaderRoute: typeof SportsIdRouteImport
-      parentRoute: typeof SportsRoute
+      parentRoute: typeof rootRouteImport
     }
     '/person/$id': {
       id: '/person/$id'
@@ -394,17 +375,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface SportsRouteChildren {
-  SportsIdRoute: typeof SportsIdRoute
-}
-
-const SportsRouteChildren: SportsRouteChildren = {
-  SportsIdRoute: SportsIdRoute,
-}
-
-const SportsRouteWithChildren =
-  SportsRoute._addFileChildren(SportsRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AiRoute: AiRoute,
@@ -412,10 +382,10 @@ const rootRouteChildren: RootRouteChildren = {
   IptvRoute: IptvRoute,
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
-  SportsRoute: SportsRouteWithChildren,
   WatchlistRoute: WatchlistRoute,
   LiveIdRoute: LiveIdRoute,
   PersonIdRoute: PersonIdRoute,
+  SportsIdRoute: SportsIdRoute,
   WatchIdRoute: WatchIdRoute,
   ApiPpvStreamsRoute: ApiPpvStreamsRoute,
   ApiPublicDownloadRoute: ApiPublicDownloadRoute,
