@@ -243,7 +243,7 @@ function LiveSportsRail() {
           <p className="mt-0.5 text-xs text-muted-foreground">
             {events.live > 0
               ? `${events.live} match${events.live === 1 ? "" : "es"} airing now`
-              : "Football, NFL, UFC, MMA, NBA, F1 and more"}
+              : "No live matches right now — only active streams appear."}
           </p>
         </div>
         <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-white/15 transition group-hover:bg-white/15">
