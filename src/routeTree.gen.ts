@@ -18,6 +18,7 @@ import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as AiRouteImport } from './routes/ai'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WatchIdRouteImport } from './routes/watch.$id'
+import { Route as SportsIdRouteImport } from './routes/sports.$id'
 import { Route as PersonIdRouteImport } from './routes/person.$id'
 import { Route as LiveIdRouteImport } from './routes/live.$id'
 import { Route as MediaTypeIdRouteImport } from './routes/media.$type.$id'
@@ -71,6 +72,11 @@ const WatchIdRoute = WatchIdRouteImport.update({
   path: '/watch/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SportsIdRoute = SportsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => SportsRoute,
+} as any)
 const PersonIdRoute = PersonIdRouteImport.update({
   id: '/person/$id',
   path: '/person/$id',
@@ -114,10 +120,11 @@ export interface FileRoutesByFullPath {
   '/iptv': typeof IptvRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
-  '/sports': typeof SportsRoute
+  '/sports': typeof SportsRouteWithChildren
   '/watchlist': typeof WatchlistRoute
   '/live/$id': typeof LiveIdRoute
   '/person/$id': typeof PersonIdRoute
+  '/sports/$id': typeof SportsIdRoute
   '/watch/$id': typeof WatchIdRoute
   '/api/public/download': typeof ApiPublicDownloadRoute
   '/api/public/febbox-proxy': typeof ApiPublicFebboxProxyRoute
@@ -132,10 +139,11 @@ export interface FileRoutesByTo {
   '/iptv': typeof IptvRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
-  '/sports': typeof SportsRoute
+  '/sports': typeof SportsRouteWithChildren
   '/watchlist': typeof WatchlistRoute
   '/live/$id': typeof LiveIdRoute
   '/person/$id': typeof PersonIdRoute
+  '/sports/$id': typeof SportsIdRoute
   '/watch/$id': typeof WatchIdRoute
   '/api/public/download': typeof ApiPublicDownloadRoute
   '/api/public/febbox-proxy': typeof ApiPublicFebboxProxyRoute
@@ -151,10 +159,11 @@ export interface FileRoutesById {
   '/iptv': typeof IptvRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
-  '/sports': typeof SportsRoute
+  '/sports': typeof SportsRouteWithChildren
   '/watchlist': typeof WatchlistRoute
   '/live/$id': typeof LiveIdRoute
   '/person/$id': typeof PersonIdRoute
+  '/sports/$id': typeof SportsIdRoute
   '/watch/$id': typeof WatchIdRoute
   '/api/public/download': typeof ApiPublicDownloadRoute
   '/api/public/febbox-proxy': typeof ApiPublicFebboxProxyRoute
@@ -175,6 +184,7 @@ export interface FileRouteTypes {
     | '/watchlist'
     | '/live/$id'
     | '/person/$id'
+    | '/sports/$id'
     | '/watch/$id'
     | '/api/public/download'
     | '/api/public/febbox-proxy'
@@ -193,6 +203,7 @@ export interface FileRouteTypes {
     | '/watchlist'
     | '/live/$id'
     | '/person/$id'
+    | '/sports/$id'
     | '/watch/$id'
     | '/api/public/download'
     | '/api/public/febbox-proxy'
@@ -211,6 +222,7 @@ export interface FileRouteTypes {
     | '/watchlist'
     | '/live/$id'
     | '/person/$id'
+    | '/sports/$id'
     | '/watch/$id'
     | '/api/public/download'
     | '/api/public/febbox-proxy'
@@ -226,7 +238,7 @@ export interface RootRouteChildren {
   IptvRoute: typeof IptvRoute
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
-  SportsRoute: typeof SportsRoute
+  SportsRoute: typeof SportsRouteWithChildren
   WatchlistRoute: typeof WatchlistRoute
   LiveIdRoute: typeof LiveIdRoute
   PersonIdRoute: typeof PersonIdRoute
@@ -303,6 +315,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WatchIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sports/$id': {
+      id: '/sports/$id'
+      path: '/$id'
+      fullPath: '/sports/$id'
+      preLoaderRoute: typeof SportsIdRouteImport
+      parentRoute: typeof SportsRoute
+    }
     '/person/$id': {
       id: '/person/$id'
       path: '/person/$id'
@@ -355,6 +374,17 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface SportsRouteChildren {
+  SportsIdRoute: typeof SportsIdRoute
+}
+
+const SportsRouteChildren: SportsRouteChildren = {
+  SportsIdRoute: SportsIdRoute,
+}
+
+const SportsRouteWithChildren =
+  SportsRoute._addFileChildren(SportsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AiRoute: AiRoute,
@@ -362,7 +392,7 @@ const rootRouteChildren: RootRouteChildren = {
   IptvRoute: IptvRoute,
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
-  SportsRoute: SportsRoute,
+  SportsRoute: SportsRouteWithChildren,
   WatchlistRoute: WatchlistRoute,
   LiveIdRoute: LiveIdRoute,
   PersonIdRoute: PersonIdRoute,
