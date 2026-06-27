@@ -580,7 +580,7 @@ function MusicPage() {
                     </a>
                   )}
                 </div>
-                <div className="mt-4 flex gap-2">
+                <div className="mt-4 flex flex-wrap gap-2">
                   <button onClick={() => toggleLike(current)} className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm ring-1 ${isLiked(current) ? "bg-pink-500/20 text-pink-300 ring-pink-400/40" : "bg-white/10 ring-white/20 hover:bg-white/15"}`}>
                     <Heart className={`h-4 w-4 ${isLiked(current)?"fill-current":""}`} /> {isLiked(current) ? "Liked" : "Like"}
                   </button>
@@ -589,6 +589,25 @@ function MusicPage() {
                   </button>
                   <button onClick={() => setShowLyrics(s => !s)} className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-sm ring-1 ring-white/20 hover:bg-white/15">
                     {showLyrics ? "Hide lyrics" : "Show lyrics"}
+                  </button>
+                  <button
+                    onClick={async () => {
+                      const more = await searchITunes(current.artist, 25);
+                      const others = more.filter(t => t.id !== current.id);
+                      if (!others.length) return;
+                      const shuffled = others.sort(() => Math.random() - 0.5);
+                      play(shuffled[0], shuffled, 0);
+                    }}
+                    className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-sm ring-1 ring-white/20 hover:bg-white/15"
+                    title={`Radio based on ${current.artist}`}
+                  >
+                    <Shuffle className="h-4 w-4" /> Artist radio
+                  </button>
+                  <button
+                    onClick={() => { setQuery(current.artist); setShowSearch(true); searchInputRef.current?.focus(); }}
+                    className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-sm ring-1 ring-white/20 hover:bg-white/15"
+                  >
+                    <Search className="h-4 w-4" /> More by artist
                   </button>
                 </div>
                 {showLyrics && (
