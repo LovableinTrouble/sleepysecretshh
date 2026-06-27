@@ -404,15 +404,19 @@ function MusicPage() {
       {/* Body */}
       <div className="flex min-h-0 flex-1 gap-4 px-4 pb-48 md:px-6 md:pb-52">
         {/* Sidebar */}
-        <aside className="hidden w-64 shrink-0 flex-col gap-2 rounded-2xl bg-black/30 p-3 ring-1 ring-white/10 backdrop-blur md:flex">
-          <button onClick={() => setView("home")} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${view==="home"?"bg-white/15 font-semibold":"hover:bg-white/10"}`}>
-            <NoteIcon className="h-4 w-4" /> Home
-          </button>
-          <button onClick={() => setView("liked")} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${view==="liked"?"bg-white/15 font-semibold":"hover:bg-white/10"}`}>
-            <Heart className="h-4 w-4" /> Liked <span className="ml-auto text-xs text-white/50">{liked.length}</span>
-          </button>
+        <aside className="hidden w-64 shrink-0 flex-col gap-4 rounded-2xl bg-black/30 p-4 ring-1 ring-white/10 backdrop-blur md:flex">
+          <nav className="flex flex-col gap-1.5">
+            <button onClick={() => setView("home")} className={`flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm ${view==="home"?"bg-white/15 font-semibold":"hover:bg-white/10"}`}>
+              <NoteIcon className="h-4 w-4" /> Home
+            </button>
+            <button onClick={() => setView("liked")} className={`flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm ${view==="liked"?"bg-white/15 font-semibold":"hover:bg-white/10"}`}>
+              <Heart className="h-4 w-4" /> Liked <span className="ml-auto text-xs text-white/50">{liked.length}</span>
+            </button>
+          </nav>
 
-          <button onClick={() => setImportOpen(true)} className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-pink-500/20 to-purple-500/20 px-3 py-2 text-sm ring-1 ring-white/10 hover:from-pink-500/30 hover:to-purple-500/30">
+          <div className="h-px bg-white/10" />
+
+          <button onClick={() => setImportOpen(true)} className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-pink-500/20 to-purple-500/20 px-3 py-2.5 text-sm ring-1 ring-white/10 hover:from-pink-500/30 hover:to-purple-500/30">
             <Download className="h-4 w-4" /> Import YouTube playlist
           </button>
 
@@ -421,34 +425,36 @@ function MusicPage() {
             <input
               value={libQuery} onChange={(e) => setLibQuery(e.target.value)}
               placeholder="Filter library…"
-              className="w-full rounded-lg bg-white/5 py-1.5 pl-8 pr-2 text-xs text-white placeholder:text-white/40 outline-none ring-1 ring-white/10 focus:ring-white/25"
+              className="w-full rounded-lg bg-white/5 py-2 pl-8 pr-2 text-xs text-white placeholder:text-white/40 outline-none ring-1 ring-white/10 focus:ring-white/25"
             />
           </div>
 
-          <div className="flex items-center justify-between px-2 text-[11px] uppercase tracking-widest text-white/40">
-            <span>Playlists</span>
-            <button onClick={openCreate} className="rounded p-1 hover:bg-white/10" aria-label="New playlist"><Plus className="h-3.5 w-3.5" /></button>
-          </div>
-          <div className="flex flex-col gap-0.5 overflow-y-auto">
-            {playlists.filter(pl => pl.name.toLowerCase().includes(libQuery.toLowerCase())).map(pl => (
-              <div key={pl.id} className={`group flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm ${view===pl.id?"bg-white/15":"hover:bg-white/10"}`}>
-                <button onClick={() => setView(pl.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
-                  <ListMusic className="h-4 w-4 shrink-0 text-white/70" />
-                  <span className="truncate">{pl.name}</span>
-                  <span className="ml-auto text-xs text-white/50">{pl.tracks.length}</span>
-                </button>
-                <button onClick={() => deletePlaylist(pl.id)} className="hidden rounded p-1 text-white/50 hover:bg-white/10 hover:text-white group-hover:block" aria-label="Delete"><Trash2 className="h-3.5 w-3.5" /></button>
-              </div>
-            ))}
-            {!playlists.length && <div className="px-3 py-2 text-xs text-white/40">No playlists yet.</div>}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between px-1 text-[11px] uppercase tracking-widest text-white/40">
+              <span>Playlists</span>
+              <button onClick={openCreate} className="rounded p-1 hover:bg-white/10" aria-label="New playlist"><Plus className="h-3.5 w-3.5" /></button>
+            </div>
+            <div className="flex max-h-56 flex-col gap-1 overflow-y-auto pr-1">
+              {playlists.filter(pl => pl.name.toLowerCase().includes(libQuery.toLowerCase())).map(pl => (
+                <div key={pl.id} className={`group flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${view===pl.id?"bg-white/15":"hover:bg-white/10"}`}>
+                  <button onClick={() => setView(pl.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+                    <ListMusic className="h-4 w-4 shrink-0 text-white/70" />
+                    <span className="truncate">{pl.name}</span>
+                    <span className="ml-auto text-xs text-white/50">{pl.tracks.length}</span>
+                  </button>
+                  <button onClick={() => deletePlaylist(pl.id)} className="hidden rounded p-1 text-white/50 hover:bg-white/10 hover:text-white group-hover:block" aria-label="Delete"><Trash2 className="h-3.5 w-3.5" /></button>
+                </div>
+              ))}
+              {!playlists.length && <div className="px-3 py-2 text-xs text-white/40">No playlists yet.</div>}
+            </div>
           </div>
 
           {recentPlayed.length > 0 && (
-            <>
-              <div className="mt-2 px-2 text-[11px] uppercase tracking-widest text-white/40">Recently played</div>
-              <div className="flex flex-col gap-0.5 overflow-y-auto">
+            <div className="flex flex-col gap-2 border-t border-white/10 pt-3">
+              <div className="px-1 text-[11px] uppercase tracking-widest text-white/40">Recently played</div>
+              <div className="flex flex-col gap-1 overflow-y-auto">
                 {recentPlayed.slice(0, 5).map(t => (
-                  <button key={t.id} onClick={() => play(t)} className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-white/10">
+                  <button key={t.id} onClick={() => play(t)} className="flex items-center gap-2.5 rounded-lg px-2 py-2 text-left hover:bg-white/10">
                     <img src={t.artwork} alt="" className="h-7 w-7 rounded" />
                     <div className="min-w-0">
                       <div className="truncate text-xs font-medium">{t.title}</div>
@@ -457,7 +463,7 @@ function MusicPage() {
                   </button>
                 ))}
               </div>
-            </>
+            </div>
           )}
         </aside>
 
