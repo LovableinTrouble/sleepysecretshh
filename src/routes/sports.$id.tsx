@@ -141,8 +141,7 @@ function SportsMatchPage() {
             allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
             allowFullScreen
             loading="eager"
-            referrerPolicy="no-referrer"
-            className="h-full w-full border-0"
+            className="absolute inset-0 h-full w-full border-0 bg-black"
           />
         )}
       </div>

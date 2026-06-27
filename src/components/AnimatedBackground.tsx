@@ -1,8 +1,10 @@
 import { useSettings } from "@/lib/store";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function AnimatedBackground() {
   const [settings] = useSettings();
-  if (!settings.animatedBg) {
+  const isMobile = useIsMobile();
+  if (!settings.animatedBg || isMobile) {
     return <div className="pointer-events-none fixed inset-0 -z-10" style={{ background: "var(--gradient-bg)" }} />;
   }
   return (
