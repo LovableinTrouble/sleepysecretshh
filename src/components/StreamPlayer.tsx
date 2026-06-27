@@ -798,7 +798,6 @@ function DirectVideo({
   const failedUrlsRef = useRef<Set<string>>(new Set());
   const playRequestRef = useRef(0);
   const playPendingRef = useRef(false);
-  const [showDownloadsNotice, setShowDownloadsNotice] = useState(false);
 
   const [error, setError] = useState(false);
   const [buffering, setBuffering] = useState(false);
@@ -1530,54 +1529,8 @@ function DirectVideo({
             {SOURCE_TIER_LABEL[sourceKey]}
           </span>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowDownloadsNotice(true)}
-          className="pointer-events-auto inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black/55 text-white ring-1 ring-white/15 backdrop-blur-md transition hover:bg-black/75"
-          aria-label="Downloads"
-          title="Downloads"
-        >
-          <Download className="h-[18px] w-[18px]" strokeWidth={2} />
-        </button>
       </div>
 
-
-      {showDownloadsNotice && (
-        <div
-          className="absolute inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fade-in"
-          onClick={() => setShowDownloadsNotice(false)}
-        >
-          <div
-            className="w-[min(92vw,420px)] rounded-2xl bg-zinc-950/95 p-6 text-center text-white ring-1 ring-white/10 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-primary ring-1 ring-primary/30">
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-            <h3 className="mt-3 text-base font-semibold">Downloads handled by primary source</h3>
-            <p className="mt-2 text-sm text-white/65">
-              To manage downloads, head to <span className="font-medium text-white">Settings → Downloads</span> on your primary source.
-            </p>
-            <div className="mt-5 flex items-center justify-center gap-2">
-              <a
-                href="/settings"
-                className="rounded-lg bg-primary px-4 h-9 inline-flex items-center text-sm font-semibold text-primary-foreground hover:bg-primary/90"
-              >
-                Open Settings
-              </a>
-              <button
-                type="button"
-                onClick={() => setShowDownloadsNotice(false)}
-                className="rounded-lg px-4 h-9 text-sm font-medium text-white/65 hover:text-white"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Subtitle style */}
       <style>{`
