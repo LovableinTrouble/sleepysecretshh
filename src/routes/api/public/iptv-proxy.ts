@@ -144,15 +144,15 @@ async function handle(request: Request, method: "GET" | "HEAD"): Promise<Respons
     }
   } catch (err) {
     console.error("[iptv-proxy] fetch failed", currentUrl, err);
-    return new Response(`fetch failed: ${(err as Error).message}`, {
-      status: 502,
+    return new Response("stream unavailable", {
+      status: 404,
       headers: CORS,
     });
   }
 
   if (!upstream.ok && upstream.status !== 206) {
     return new Response(`upstream ${upstream.status}`, {
-      status: upstream.status,
+      status: upstream.status >= 500 ? 404 : upstream.status,
       headers: CORS,
     });
   }
