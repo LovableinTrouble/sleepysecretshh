@@ -355,6 +355,18 @@
   border: 1px solid var(--glass-border);
 }
 
+/* Lighter glass on mobile — heavy backdrop-filter blurs on fixed elements
+   (BottomNav, headers) cause huge paint times on phones and make taps feel
+   delayed by hundreds of ms. Tone them down + raise opacity so the UI still
+   reads. Doesn't affect desktop. */
+@media (max-width: 767px) {
+  .glass, .glass-strong {
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    background: color-mix(in oklab, var(--popover) 92%, transparent);
+  }
+}
+
 @utility gradient-text {
   background: var(--gradient-primary);
   -webkit-background-clip: text;
@@ -493,7 +505,24 @@
 button, a, [role="button"] {
   transition: background-color 150ms ease-out, color 150ms ease-out, border-color 150ms ease-out, transform 150ms ease-out, opacity 150ms ease-out, box-shadow 150ms ease-out;
 }
-button:active, [role="button"]:active { transform: scale(0.97); }
+/* Only apply press-scale on devices that actually hover (desktop / mouse).
+   On touch the synthetic :active fires on every tap and triggers a layout
+   pass which makes taps feel laggy. */
+@media (hover: hover) {
+  button:active, [role="button"]:active { transform: scale(0.97); }
+}
+
+/* Kill sticky hover styles on touch: mobile Safari/Chrome leaves :hover stuck
+   after a tap which retriggers heavy scale/blur transitions. */
+@media (hover: none) {
+  .group:hover .group-hover\:scale-105,
+  .group:hover .group-hover\:scale-110,
+  .group:hover .group-hover\:opacity-100 { transform: none !important; }
+  .hover\:scale-105:hover,
+  .hover\:scale-110:hover,
+  .hover\:-translate-y-0\.5:hover,
+  .hover\:-translate-y-1:hover { transform: none !important; }
+}
 
 /* ----------------- Mobile polish ----------------- */
 html { -webkit-text-size-adjust: 100%; touch-action: manipulation; }
