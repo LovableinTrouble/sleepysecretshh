@@ -89,6 +89,17 @@ function IptvPage() {
     return list;
   }, [channels, group, query, favs]);
 
+  const handleSavePlaylist = (pl: CustomPlaylist) => {
+    const next = [...custom.filter((p) => p.id !== pl.id), pl];
+    setCustom(next);
+    saveCustomPlaylists(next);
+  };
+  const handleRemovePlaylist = (id: string) => {
+    const next = custom.filter((p) => p.id !== id);
+    setCustom(next);
+    saveCustomPlaylists(next);
+  };
+
   return (
     <div className="relative min-h-screen pb-32 pt-20 md:pb-12 md:pt-12 animate-page-in">
       <header className="px-6 md:px-10">
