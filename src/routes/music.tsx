@@ -2,12 +2,25 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
   Search, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Repeat,
-  Heart, Plus, Music2, ListMusic, Trash2, X, Shuffle, ChevronLeft, Clock, ExternalLink, ListOrdered,
+  Heart, Plus, ListMusic, Trash2, X, Shuffle, Clock, ExternalLink, ListOrdered, Download, Loader2,
 } from "lucide-react";
+
+// Clean custom music note glyph used in the header
+function NoteIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
+      <path d="M9 18V6.2a1 1 0 0 1 .8-.98l8-1.6A1 1 0 0 1 19 4.6V16"
+            stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="6.5" cy="18" r="2.5" fill="currentColor"/>
+      <circle cx="16.5" cy="16" r="2.5" fill="currentColor"/>
+    </svg>
+  );
+}
 import {
   searchITunes, searchYouTube, fetchLyrics,
   loadPlaylists, savePlaylists, loadLiked, saveLiked,
   loadRecent, pushRecent, clearRecent,
+  importInvidiousPlaylist,
   type Track, type Playlist,
 } from "@/lib/music";
 
@@ -75,6 +88,12 @@ function MusicPage() {
   const [pickerFor, setPickerFor] = useState<Track | null>(null);
   const [recent, setRecent] = useState<string[]>([]);
   const [showQueue, setShowQueue] = useState(false);
+  const [libQuery, setLibQuery] = useState("");
+  const [importOpen, setImportOpen] = useState(false);
+  const [importUrl, setImportUrl] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [recentPlayed, setRecentPlayed] = useState<Track[]>([]);
 
   const playerRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -82,6 +101,28 @@ function MusicPage() {
   const artRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => { setPlaylists(loadPlaylists()); setLiked(loadLiked()); setRecent(loadRecent()); }, []);
+
+  useEffect(() => {
+    try { setRecentPlayed(JSON.parse(localStorage.getItem("sleepy.music.recentplayed.v1") || "[]")); } catch {}
+  }, []);
+
+  const totalActiveMs = useMemo(() => {
+    return 0; // computed via activeList below; placeholder so refs resolve
+  }, []);
+
+  async function handleImport() {
+    setImporting(true); setImportError(null);
+    try {
+      const res = await importInvidiousPlaylist(importUrl);
+      if (!res || !res.tracks.length) { setImportError("Couldn't load that playlist. Check the link."); return; }
+      const np: Playlist = { id: crypto.randomUUID(), name: res.name, tracks: res.tracks, createdAt: Date.now() };
+      const next = [np, ...playlists];
+      setPlaylists(next); savePlaylists(next);
+      setView(np.id);
+      setImportOpen(false); setImportUrl("");
+    } catch { setImportError("Import failed. Try a different playlist."); }
+    finally { setImporting(false); }
+  }
 
   // keyboard: space=play/pause, / focus search
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -168,8 +209,13 @@ function MusicPage() {
     setShowSearch(false);
     setQuery("");
     if (query.trim().length >= 2) setRecent(pushRecent(query.trim()));
-    // lookup youtube
-    const vid = await searchYouTube(`${t.title} ${t.artist} audio`);
+    setRecentPlayed(prev => {
+      const next = [t, ...prev.filter(x => x.id !== t.id)].slice(0, 12);
+      try { localStorage.setItem("sleepy.music.recentplayed.v1", JSON.stringify(next)); } catch {}
+      return next;
+    });
+    // use direct video id when available (imported YT playlists), else lookup
+    const vid = t.videoId || await searchYouTube(`${t.title} ${t.artist} audio`);
     if (vid && playerRef.current?.loadVideoById) {
       playerRef.current.loadVideoById(vid);
       playerRef.current.playVideo();
@@ -270,14 +316,11 @@ function MusicPage() {
       <div ref={containerRef} className="absolute -z-10 h-0 w-0 overflow-hidden" />
 
       {/* Top bar */}
-      <header className="flex items-center gap-3 px-4 py-3 md:px-6">
-        <a href="/" className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 hover:bg-white/20" aria-label="Back">
-          <ChevronLeft className="h-5 w-5" />
-        </a>
+      <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 py-3 md:px-6">
         <div className="flex items-center gap-2 text-lg font-bold tracking-tight">
-          <Music2 className="h-5 w-5" /> Music
+          <NoteIcon className="h-5 w-5 text-white/90" /> Music
         </div>
-        <div className="relative ml-auto w-full max-w-md">
+        <div className="relative mx-auto w-full max-w-xl justify-self-center">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/60" />
           <input
             ref={searchInputRef}
@@ -343,25 +386,40 @@ function MusicPage() {
             </div>
           )}
         </div>
+        <div />
       </header>
 
       {/* Body */}
       <div className="flex min-h-0 flex-1 gap-4 px-4 pb-48 md:px-6 md:pb-52">
         {/* Sidebar */}
-        <aside className="hidden w-60 shrink-0 flex-col gap-1 rounded-2xl bg-black/30 p-3 ring-1 ring-white/10 backdrop-blur md:flex">
+        <aside className="hidden w-64 shrink-0 flex-col gap-2 rounded-2xl bg-black/30 p-3 ring-1 ring-white/10 backdrop-blur md:flex">
           <button onClick={() => setView("home")} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${view==="home"?"bg-white/15 font-semibold":"hover:bg-white/10"}`}>
-            <Music2 className="h-4 w-4" /> Home
+            <NoteIcon className="h-4 w-4" /> Home
           </button>
           <button onClick={() => setView("liked")} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${view==="liked"?"bg-white/15 font-semibold":"hover:bg-white/10"}`}>
             <Heart className="h-4 w-4" /> Liked <span className="ml-auto text-xs text-white/50">{liked.length}</span>
           </button>
-          <div className="mt-3 flex items-center justify-between px-2 text-[11px] uppercase tracking-widest text-white/40">
+
+          <button onClick={() => setImportOpen(true)} className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-pink-500/20 to-purple-500/20 px-3 py-2 text-sm ring-1 ring-white/10 hover:from-pink-500/30 hover:to-purple-500/30">
+            <Download className="h-4 w-4" /> Import YouTube playlist
+          </button>
+
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/50" />
+            <input
+              value={libQuery} onChange={(e) => setLibQuery(e.target.value)}
+              placeholder="Filter library…"
+              className="w-full rounded-lg bg-white/5 py-1.5 pl-8 pr-2 text-xs text-white placeholder:text-white/40 outline-none ring-1 ring-white/10 focus:ring-white/25"
+            />
+          </div>
+
+          <div className="flex items-center justify-between px-2 text-[11px] uppercase tracking-widest text-white/40">
             <span>Playlists</span>
             <button onClick={createPlaylist} className="rounded p-1 hover:bg-white/10" aria-label="New playlist"><Plus className="h-3.5 w-3.5" /></button>
           </div>
           <div className="flex flex-col gap-0.5 overflow-y-auto">
-            {playlists.map(pl => (
-              <div key={pl.id} className={`group flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${view===pl.id?"bg-white/15":"hover:bg-white/10"}`}>
+            {playlists.filter(pl => pl.name.toLowerCase().includes(libQuery.toLowerCase())).map(pl => (
+              <div key={pl.id} className={`group flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm ${view===pl.id?"bg-white/15":"hover:bg-white/10"}`}>
                 <button onClick={() => setView(pl.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
                   <ListMusic className="h-4 w-4 shrink-0 text-white/70" />
                   <span className="truncate">{pl.name}</span>
@@ -372,15 +430,32 @@ function MusicPage() {
             ))}
             {!playlists.length && <div className="px-3 py-2 text-xs text-white/40">No playlists yet.</div>}
           </div>
+
+          {recentPlayed.length > 0 && (
+            <>
+              <div className="mt-2 px-2 text-[11px] uppercase tracking-widest text-white/40">Recently played</div>
+              <div className="flex flex-col gap-0.5 overflow-y-auto">
+                {recentPlayed.slice(0, 5).map(t => (
+                  <button key={t.id} onClick={() => play(t)} className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-white/10">
+                    <img src={t.artwork} alt="" className="h-7 w-7 rounded" />
+                    <div className="min-w-0">
+                      <div className="truncate text-xs font-medium">{t.title}</div>
+                      <div className="truncate text-[10px] text-white/50">{t.artist}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </aside>
 
         {/* Main */}
         <main className="min-w-0 flex-1 overflow-y-auto">
           {view === "home" && !current && (
             <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-              <Music2 className="h-12 w-12 text-white/40" />
+              <NoteIcon className="h-12 w-12 text-white/40" />
               <h1 className="text-2xl font-bold">Search to start listening</h1>
-              <p className="max-w-sm text-sm text-white/60">Songs stream from YouTube via Invidious. Build playlists, like songs, and view lyrics — all stored on your device.</p>
+              <p className="max-w-sm text-sm text-white/60">Songs stream from YouTube via Invidious. Build playlists, like songs, view lyrics — even import full YouTube playlists.</p>
             </div>
           )}
 
@@ -393,7 +468,12 @@ function MusicPage() {
                 <div>
                   <div className="text-xs uppercase tracking-widest text-white/60">Playlist</div>
                   <h1 className="text-3xl font-black md:text-4xl">{view === "liked" ? "Liked Songs" : playlists.find(p=>p.id===view)?.name}</h1>
-                  <div className="mt-1 text-sm text-white/60">{activeList.length} songs</div>
+                  <div className="mt-1 text-sm text-white/60">
+                    {activeList.length} songs
+                    {activeList.some(t => t.durationMs) && (
+                      <> · {fmt(activeList.reduce((s, t) => s + (t.durationMs || 0), 0) / 1000)}</>
+                    )}
+                  </div>
                   <div className="mt-3 flex gap-2">
                     <button disabled={!activeList.length} onClick={() => play(activeList[0], activeList, 0)} className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-black disabled:opacity-40">
                       <Play className="h-4 w-4 fill-current" /> Play
@@ -571,6 +651,34 @@ function MusicPage() {
                 </button>
               ))}
               {!playlists.length && <div className="px-3 py-2 text-xs text-white/50">No playlists yet.</div>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import YouTube playlist */}
+      {importOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur-sm" onClick={() => !importing && setImportOpen(false)}>
+          <div className="w-full max-w-md rounded-2xl bg-zinc-900 p-5 ring-1 ring-white/10" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-base font-semibold">Import YouTube playlist</h3>
+              <button onClick={() => !importing && setImportOpen(false)} className="rounded p-1 hover:bg-white/10"><X className="h-4 w-4" /></button>
+            </div>
+            <p className="mb-3 text-xs text-white/60">Paste a YouTube playlist URL or ID. Fetched anonymously via Invidious — no account needed.</p>
+            <input
+              autoFocus
+              value={importUrl}
+              onChange={(e) => setImportUrl(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleImport(); }}
+              placeholder="https://youtube.com/playlist?list=…"
+              className="mb-2 w-full rounded-lg bg-white/10 px-3 py-2 text-sm outline-none ring-1 ring-white/10 placeholder:text-white/40 focus:ring-white/30"
+            />
+            {importError && <div className="mb-2 text-xs text-red-300">{importError}</div>}
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setImportOpen(false)} disabled={importing} className="rounded-lg px-3 py-1.5 text-sm text-white/70 hover:bg-white/10">Cancel</button>
+              <button onClick={handleImport} disabled={importing || !importUrl.trim()} className="flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-black disabled:opacity-50">
+                {importing ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Importing…</> : <><Download className="h-3.5 w-3.5" /> Import</>}
+              </button>
             </div>
           </div>
         </div>
