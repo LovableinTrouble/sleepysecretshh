@@ -142,6 +142,18 @@ function MusicPage() {
   }, []);
   const toggleRef = useRef<() => void>(() => {});
 
+  // hide search results when clicking outside
+  useEffect(() => {
+    const onDown = (e: MouseEvent) => {
+      if (!searchWrapperRef.current) return;
+      if (!searchWrapperRef.current.contains(e.target as Node)) {
+        setShowSearch(false);
+      }
+    };
+    window.addEventListener("mousedown", onDown);
+    return () => window.removeEventListener("mousedown", onDown);
+  }, []);
+
   // YouTube init
   useEffect(() => {
     let killed = false;
