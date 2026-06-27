@@ -463,10 +463,10 @@ function MusicPage() {
           </div>
 
           {recentPlayed.length > 0 && (
-            <div className="flex flex-col gap-2 border-t border-white/10 pt-3">
+            <div className="flex min-h-0 flex-col gap-2 border-t border-white/10 pt-3">
               <div className="px-1 text-[11px] uppercase tracking-widest text-white/40">Recently played</div>
-              <div className="flex flex-col gap-1 overflow-y-auto">
-                {recentPlayed.slice(0, 5).map(t => (
+              <div className="flex max-h-56 flex-col gap-1 overflow-y-auto pr-1">
+                {recentPlayed.map(t => (
                   <button key={t.id} onClick={() => play(t)} className="flex items-center gap-2.5 rounded-lg px-2 py-2 text-left hover:bg-white/10">
                     <img src={t.artwork} alt="" className="h-7 w-7 rounded" />
                     <div className="min-w-0">
