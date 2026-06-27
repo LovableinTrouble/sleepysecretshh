@@ -12,7 +12,6 @@ import {
   PictureInPicture2,
   Cast,
   ChevronLeft,
-  Download,
   RotateCcw,
   RotateCw,
 } from "lucide-react";
@@ -32,21 +31,10 @@ import {
   resolveFebboxStream,
   type ResolvedQuality,
 } from "@/lib/api/streams.functions";
-// Downloads are handled by the primary source (FebBox). Instead of opening
-// any external downloader, we surface a clean in-player notice telling the
-// user to manage downloads from Settings → Downloads.
-const DOWNLOADS_NOTICE_TEXT =
-  "Downloads are handled by your primary source. Open Settings → Downloads to configure.";
 import { getLocalProgressFor, saveProgressLocal, syncProgressUp } from "@/lib/progress";
 
 function buildSourceUrl(source: Source, media: Media, season?: number, episode?: number): string {
   return source.build(media, season, episode);
-}
-
-function buildVoidXDownloadUrl(media: Media, season?: number, episode?: number): string {
-  const host = String.fromCharCode(122, 120, 99, 115, 116, 114, 101, 97, 109, 46, 120, 121, 122);
-  if (media.type === "movie") return `https://${host}/download/movie/${media.id}`;
-  return `https://${host}/download/tv/${media.id}/${season ?? 1}/${episode ?? 1}`;
 }
 
 interface Props {
