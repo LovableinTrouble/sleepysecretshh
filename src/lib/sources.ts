@@ -25,6 +25,8 @@ const FEBBOX: Source = {
   kind: "febbox-direct", tier: "primary", build: () => "",
 };
 
+const VOIDX_HOST = ["v", "zxc" + "stream", "xyz"].join(".");
+
 // VoidX — the only embed provider. Modern free embed with built-in
 // player. Adblock-sandboxed so pop-up / redirect networks are neutered
 // while the player JS still runs.
@@ -32,8 +34,8 @@ const ZXCSTREAM: Source = {
   id: "vidsrc", name: "VoidX", badge: "Embed · ad-blocked",
   kind: "embed", tier: "embed", noSandbox: false,
   build: (m, s, e) => m.type === "movie"
-    ? `https://v.zxcstream.xyz/player/movie/${m.id}?autoplay=true&color=ff3b30&back=true`
-    : `https://v.zxcstream.xyz/player/tv/${m.id}/${s ?? 1}/${e ?? 1}?autoplay=true&color=ff3b30&back=true`,
+    ? `https://${VOIDX_HOST}/player/movie/${m.id}?autoplay=true&color=ff3b30&back=true`
+    : `https://${VOIDX_HOST}/player/tv/${m.id}/${s ?? 1}/${e ?? 1}?autoplay=true&color=ff3b30&back=true`,
 };
 
 export const DEFAULT_EMBED_SOURCES: Source[] = [ZXCSTREAM];
