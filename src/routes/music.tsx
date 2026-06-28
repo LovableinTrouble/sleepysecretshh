@@ -23,6 +23,17 @@ import {
   importInvidiousPlaylist,
   type Track, type Playlist,
 } from "@/lib/music";
+import {
+  useMusicPlayer,
+  play as mpPlay,
+  toggle as mpToggle,
+  next as mpNext,
+  prev as mpPrev,
+  seek as mpSeek,
+  setVolume as mpSetVolume,
+  setMuted as mpSetMuted,
+  setRepeat as mpSetRepeat,
+} from "@/lib/music-player";
 
 export const Route = createFileRoute("/music")({
   head: () => ({
